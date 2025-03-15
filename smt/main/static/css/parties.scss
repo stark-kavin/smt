@@ -375,6 +375,18 @@ form {
     margin-top: 0.5rem;
 }
 
+.success-message {
+    color: #4caf50;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+.error-message {
+    color: #f44336;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
 /* Responsive adjustments */
 @media screen and (max-width: 768px) {
     .parties-grid {

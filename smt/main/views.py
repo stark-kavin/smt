@@ -178,6 +178,32 @@ def create_driver(request):
     
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
+@csrf_exempt
+def create_party(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            name = data.get('name')
+            location = data.get('location')
+            phone = data.get('phone')
+            gst = data.get('gst')
+            
+            # Basic validation
+            if not name:
+                return JsonResponse({'success': False, 'error': 'Party name is required'})
+            
+            # Create the party
+            party = Party.objects.create(name=name, location=location, phone=phone, gst=gst)
+            
+            return JsonResponse({'success': True, 'id': party.id, 'name': party.name})
+        
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
 def create_invoice(request):
     if request.method == 'POST':
         # Check if this is an AJAX request (JSON content type)

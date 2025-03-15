@@ -27,5 +27,6 @@ urlpatterns.extend([
     path('ajax/edit-party/', edit_party_ajax, name='ajax_edit_party'),
     path('ajax/delete-driver/', delete_driver_ajax, name='ajax_delete_driver'),
     path('ajax/edit-driver/', edit_driver_ajax, name='ajax_edit_driver'),
+    path('ajax/create-party/', create_party, name='ajax_create_party'),
 ])
 

@@ -99,6 +99,8 @@
                     <button type="button" class="btn-secondary cancel-btn">Cancel</button>
                     <button type="submit" class="btn-primary">Add Party</button>
                 </div>
+                <p class="success-message" id="add-success-message" style="display: none;">Party added successfully!</p>
+                <p class="error-message" id="add-error-message" style="display: none;"></p>
             </form>
         </div>
     </div>
@@ -222,7 +224,43 @@
         // Form submissions
         document.getElementById("addPartyForm").addEventListener("submit", function(e) {
             e.preventDefault();
-            alert("Add party functionality will be implemented later");
+            
+            const name = document.getElementById("name").value;
+            const location = document.getElementById("location").value;
+            const phone = document.getElementById("phone").value;
+            const gst = document.getElementById("gst").value;
+            
+            fetch('/ajax/create-party/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name,
+                    location: location,
+                    phone: phone,
+                    gst: gst
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById("add-success-message").style.display = "block";
+                    document.getElementById("add-error-message").style.display = "none";
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    document.getElementById("add-error-message").textContent = 'Error: ' + data.error;
+                    document.getElementById("add-error-message").style.display = "block";
+                    document.getElementById("add-success-message").style.display = "none";
+                }
+            })
+            .catch(error => {
+                document.getElementById("add-error-message").textContent = 'Error: ' + error;
+                document.getElementById("add-error-message").style.display = "block";
+                document.getElementById("add-success-message").style.display = "none";
+            });
         });
 
         document.getElementById("editPartyForm").addEventListener("submit", function(e) {
