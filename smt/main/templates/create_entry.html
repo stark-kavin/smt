@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>New Entry</title>
     {% load static %}
-    <link href="https://unpkg.com/slim-select@latest/dist/slimselect.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/slim-select/1.27.0/slimselect.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/newentry.css' %}">
-    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.9/themes/dark.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
     <!-- 
         DATE PICKER : https://flatpickr.js.org/events/
@@ -256,7 +256,7 @@
     <input type="hidden" id="post-url" value="{% url 'ajax_create_entry' %}">
     <input type="hidden" id="crsf" value="{{csrf_token}}">
 
-    <script src="https://unpkg.com/slim-select@latest/dist/slimselect.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/slim-select/1.27.0/slimselect.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script defer src="{% static 'js/new_entry.js' %}"></script>

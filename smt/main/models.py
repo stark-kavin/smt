@@ -18,10 +18,17 @@ class Driver(models.Model):
     def __str__(self):
         return f"{self.name}"
 
+class VehicleCompany(models.Model):
+    name        = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.name
+
 class Vehicle(models.Model):
     name        = models.CharField(max_length=50)
     number      = models.CharField(max_length=10,null=True,blank=True)
-    
+    company     = models.ForeignKey(VehicleCompany,on_delete=models.CASCADE,null=True,blank=True)
+
     def __str__(self):
         return f"{self.name} - {self.number}"
 
@@ -68,79 +75,93 @@ class InvoiceItem(models.Model):
     def __str__(self):
         return f"{self.entry} - {self.invoice}"
 
-# Signal to increment no_of_invoices when an InvoiceItem is created
-@receiver(post_save, sender=InvoiceItem)
-def update_invoice_count_on_create(sender, instance, created, **kwargs):
-    if created:
-        entry = instance.entry
-        entry.no_of_invoices = entry.invoiceitem_set.count()
-        entry.save()
 
-# Signal to update no_of_invoices when an InvoiceItem is deleted
-@receiver(post_delete, sender=InvoiceItem)
-def update_invoice_count_on_delete(sender, instance, **kwargs):
-    if instance.entry_id:
-        try:
-            entry = Entry.objects.get(pk=instance.entry_id)
-            entry.no_of_invoices = entry.invoiceitem_set.count()
-            entry.save()
-        except Entry.DoesNotExist:
-            pass
-
-# Signal to update invoice total when an InvoiceItem is created or updated
-@receiver(post_save, sender=InvoiceItem)
-def update_invoice_total_on_save(sender, instance, **kwargs):
-    invoice = instance.invoice
-    # Sum the total values of all entries linked to this invoice
-    entries = Entry.objects.filter(invoiceitem__invoice=invoice)
-    total_sum = sum(float(entry.total or 0) for entry in entries)
-    invoice.total = str(total_sum)
-    invoice.save(update_fields=['total'])
-
-# Signal to update invoice total when an InvoiceItem is deleted
-@receiver(post_delete, sender=InvoiceItem)
-def update_invoice_total_on_delete(sender, instance, **kwargs):
-    if instance.invoice_id:
-        try:
-            invoice = Invoice.objects.get(pk=instance.invoice_id)
-            entries = Entry.objects.filter(invoiceitem__invoice=invoice)
-            total_sum = sum(float(entry.total or 0) for entry in entries)
-            invoice.total = str(total_sum)
-            invoice.save(update_fields=['total'])
-        except Invoice.DoesNotExist:
-            pass
-
-# Signal to update invoice totals when an Entry's total is updated
-@receiver(post_save, sender=Entry)
-def update_invoice_total_on_entry_update(sender, instance, **kwargs):
-    # Find all invoices related to this entry
-    invoices = Invoice.objects.filter(invoiceitem__entry=instance)
-    for invoice in invoices:
-        entries = Entry.objects.filter(invoiceitem__invoice=invoice)
-        total_sum = sum(float(entry.total or 0) for entry in entries)
-        invoice.total = str(total_sum)
-        invoice.save(update_fields=['total'])
-
-# Helper function to calculate Entry total
-def calculate_entry_total(entry):
-    entry_items = EntryItem.objects.filter(entry=entry)
-    total_sum = sum(float(item.total or 0) for item in entry_items)
-    return str(total_sum)
-
-# Signal to update Entry total when an EntryItem is created or updated
-@receiver(post_save, sender=EntryItem)
-def update_entry_total_on_save(sender, instance, **kwargs):
+# Signal handlers for auto calculations
+@receiver([post_save, post_delete], sender=EntryItem)
+def update_entry_total(sender, instance, **kwargs):
+    """Update the total field of an Entry when EntryItems are added/modified/deleted."""
     entry = instance.entry
-    entry.total = calculate_entry_total(entry)
-    entry.save(update_fields=['total'])
-
-# Signal to update Entry total when an EntryItem is deleted
-@receiver(post_delete, sender=EntryItem)
-def update_entry_total_on_delete(sender, instance, **kwargs):
-    if instance.entry_id:
+    entry_items = EntryItem.objects.filter(entry=entry)
+    
+    if entry_items.exists():
+        # Convert all totals to float for summation, then back to string
         try:
-            entry = Entry.objects.get(pk=instance.entry_id)
-            entry.total = calculate_entry_total(entry)
-            entry.save(update_fields=['total'])
-        except Entry.DoesNotExist:
-            pass
+            total_sum = sum(float(item.total) for item in entry_items)
+            entry.total = str(total_sum)
+        except ValueError:
+            # Handle case where total might not be a valid number
+            entry.total = "Error in calculation"
+    else:
+        entry.total = "0"
+    
+    entry.save()
+
+@receiver([post_save, post_delete], sender=InvoiceItem)
+def update_entry_invoice_count(sender, instance, **kwargs):
+    """Update the no_of_invoices field of an Entry when InvoiceItems are added/modified/deleted."""
+    entry = instance.entry
+    # Count distinct invoices linked to this entry
+    invoice_count = InvoiceItem.objects.filter(entry=entry).values('invoice').distinct().count()
+    entry.no_of_invoices = invoice_count
+    entry.save()
+
+@receiver([post_save, post_delete], sender=InvoiceItem)
+def update_invoice_total(sender, instance, **kwargs):
+    """Update the total field of an Invoice when InvoiceItems are added/modified/deleted."""
+    invoice = instance.invoice
+    # Get all entries linked to this invoice
+    entry_ids = InvoiceItem.objects.filter(invoice=invoice).values_list('entry', flat=True)
+    entries = Entry.objects.filter(id__in=entry_ids)
+    
+    if entries.exists():
+        try:
+            # Sum up all entry totals (convert to float for calculation)
+            total_sum = sum(float(entry.total) for entry in entries if entry.total)
+            invoice.total = str(total_sum)
+        except ValueError:
+            # Handle case where some entries might have invalid totals
+            invoice.total = "Error in calculation"
+    else:
+        invoice.total = "0"
+    
+    invoice.save()
+
+def recalculate_all_totals_and_counts():
+
+    # Recalculate all entry totals
+    for entry in Entry.objects.all():
+        entry_items = EntryItem.objects.filter(entry=entry)
+        if entry_items.exists():
+            try:
+                total_sum = sum(float(item.total) for item in entry_items)
+                entry.total = str(total_sum)
+            except ValueError:
+                entry.total = "Error in calculation"
+        else:
+            entry.total = "0"
+        
+        # Also update invoice count while we're processing entries
+        invoice_count = InvoiceItem.objects.filter(entry=entry).values('invoice').distinct().count()
+        entry.no_of_invoices = invoice_count
+        entry.save()
+    
+    # Recalculate all invoice totals
+    for invoice in Invoice.objects.all():
+        entry_ids = InvoiceItem.objects.filter(invoice=invoice).values_list('entry', flat=True)
+        entries = Entry.objects.filter(id__in=entry_ids)
+        
+        if entries.exists():
+            try:
+                total_sum = sum(float(entry.total) for entry in entries if entry.total)
+                invoice.total = str(total_sum)
+            except ValueError:
+                invoice.total = "Error in calculation"
+        else:
+            invoice.total = "0"
+        
+        invoice.save()
+    
+    return {
+        'entries_updated': Entry.objects.count(),
+        'invoices_updated': Invoice.objects.count()
+    }

@@ -44,9 +44,9 @@ li:hover {
 
 .vehicle-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
-    max-width: 800px;
+    max-width: min(1200px, 90%);
     margin: 20px auto;
     padding: 0;
 }
@@ -107,6 +107,19 @@ body.light-theme .vehicle-card {
 .vehicle-info {
     margin-left: 15px;
     flex: 1;
+    font-size: .9rem;
+    font-weight: 400;
+
+    p{
+        letter-spacing: .2rem;
+        
+
+        &:first-child {
+            font-size: 1.3rem;
+            font-weight: 600;
+            letter-spacing: normal;
+        }
+    }
 }
 
 .avatar {

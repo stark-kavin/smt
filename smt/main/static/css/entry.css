@@ -50,7 +50,7 @@ nav h2 {
 }
 .main-wrapper-container .main-wrapper .table-extras-grid {
   display: grid;
-  grid-template-columns: 6fr 3fr;
+  grid-template-columns: 1fr;
   gap: 1rem;
 }
 .main-wrapper-container .main-wrapper .table-extras-grid .table-extra {

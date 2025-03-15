@@ -81,41 +81,11 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="table-extra table-extra-right">
-                    <h3>Invoice</h3>
-                    <div class="cards">
-                        <div class="card">
-                            <div class="txt">Entries</div>
-                            <div class="count">12</div>
-                        </div>
-                        <div class="card">
-                            <div class="txt">Party</div>
-                            <div class="count">sdhb jkdsn</div>
-                        </div>
-                        <div class="card">
-                            <div class="txt">From</div>
-                            <div class="count">12-10-2012</div>
-                        </div>
-                        <div class="card">
-                            <div class="txt">To</div>
-                            <div class="count">12-10-2012</div>
-                        </div>
-                        <div class="card">
-                            <div class="txt">Total</div>
-                            <div class="count">12</div>
-                        </div>
-                        
-                    </div>
-                </div>
             </div>
             <div class="table-container">
                 <table id="entries-table">
                     <thead>
                         <tr>
-                            <th>
-                                <input type="checkbox" id="select-all">
-                            </th>
                             <th class="sortable" data-sort="party">Party <span class="sort-icon">↕</span></th>
                             <th class="sortable" data-sort="date">Date <span class="sort-icon">↕</span></th>
                             <th class="sortable" data-sort="from">From <span class="sort-icon">↕</span></th>
@@ -135,14 +105,8 @@
                             data-driver="{{entry.driver.id}}"
                             data-total="{{entry.total}}"
                             data-vehicle="{{entry.vehicle.id}}"
+                            onclick="location.href=`{% url 'entry_details' entry.id %}`"
                             >
-                            <td class="checkbox-td">
-                            {% if not entry.no_of_invoices %}
-                            <label for="cb{{entry.id}}">
-                                <input type="checkbox" id="cb{{entry.id}}">
-                            </label>
-                            {% endif %}
-                            </td>
                             <td>{{ entry.party.name }}</td>
                             <td>{{ entry.date|date:"d-M-Y" }}</td>
                             <td>{{ entry.customer_from }}</td>
