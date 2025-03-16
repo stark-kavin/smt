@@ -30,3 +30,4 @@ urlpatterns.extend([
     path('ajax/create-party/', create_party, name='ajax_create_party'),
 ])
 
+ 

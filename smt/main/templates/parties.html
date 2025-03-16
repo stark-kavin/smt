@@ -52,16 +52,6 @@
                                 <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                             </svg>
                         </a>
-                        <button class="btn-icon edit-btn" data-id="{{ party.id }}" 
-                                data-name="{{ party.name }}"
-                                data-location="{{ party.location|default:'' }}"
-                                data-phone="{{ party.phone|default:'' }}"
-                                data-gst="{{ party.gst|default:'' }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 24 24" width="18"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-                        </button>
-                        <button class="btn-icon delete-btn" data-id="{{ party.id }}" data-name="{{ party.name }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 24 24" width="18"><path d="M0 0h24v24H0z" fill="none"/><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-                        </button>
                     </div>
                 </div>
                 {% endfor %}
@@ -97,7 +87,12 @@
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn-secondary cancel-btn">Cancel</button>
-                    <button type="submit" class="btn-primary">Add Party</button>
+                    <button type="submit" class="btn-primary" id="addPartySubmit">
+                        <div class="loading-container">
+                            <span class="spinner" id="addSpinner"></span>
+                            <span>Add Party</span>
+                        </div>
+                    </button>
                 </div>
                 <p class="success-message" id="add-success-message" style="display: none;">Party added successfully!</p>
                 <p class="error-message" id="add-error-message" style="display: none;"></p>
@@ -105,63 +100,9 @@
         </div>
     </div>
 
-    <!-- Edit Party Modal -->
-    <div id="editPartyModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Edit Party</h3>
-                <span class="close">&times;</span>
-            </div>
-            <form id="editPartyForm">
-                <input type="hidden" id="edit-id" name="id">
-                <div class="form-group">
-                    <label for="edit-name">Name</label>
-                    <input type="text" id="edit-name" name="name" required>
-                </div>
-                <div class="form-group">
-                    <label for="edit-location">Location</label>
-                    <input type="text" id="edit-location" name="location">
-                </div>
-                <div class="form-group">
-                    <label for="edit-phone">Phone</label>
-                    <input type="text" id="edit-phone" name="phone">
-                </div>
-                <div class="form-group">
-                    <label for="edit-gst">GST</label>
-                    <input type="text" id="edit-gst" name="gst">
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn-secondary cancel-btn">Cancel</button>
-                    <button type="submit" class="btn-primary">Update Party</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Delete Party Modal -->
-    <div id="deletePartyModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Delete Party</h3>
-                <span class="close">&times;</span>
-            </div>
-            <form id="deletePartyForm">
-                <input type="hidden" id="delete-id" name="id">
-                <p>Are you sure you want to delete <span id="delete-party-name"></span>?</p>
-                <p class="warning">This action cannot be undone!</p>
-                <div class="form-actions">
-                    <button type="button" class="btn-secondary cancel-btn">Cancel</button>
-                    <button type="submit" class="btn-danger">Delete Party</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script>
         // Modal handling
         const addModal = document.getElementById("addPartyModal");
-        const editModal = document.getElementById("editPartyModal");
-        const deleteModal = document.getElementById("deletePartyModal");
         const addBtn = document.getElementById("addPartyBtn");
         const closeBtns = document.querySelectorAll(".close, .cancel-btn");
 
@@ -171,59 +112,40 @@
             document.getElementById("addPartyForm").reset();
         }
 
-        // Open edit modal
-        document.querySelectorAll(".edit-btn").forEach(btn => {
-            btn.onclick = function() {
-                const id = this.getAttribute("data-id");
-                const name = this.getAttribute("data-name");
-                const location = this.getAttribute("data-location");
-                const phone = this.getAttribute("data-phone");
-                const gst = this.getAttribute("data-gst");
-                
-                document.getElementById("edit-id").value = id;
-                document.getElementById("edit-name").value = name;
-                document.getElementById("edit-location").value = location;
-                document.getElementById("edit-phone").value = phone;
-                document.getElementById("edit-gst").value = gst;
-                
-                editModal.style.display = "block";
-            }
-        });
-
-        // Open delete modal
-        document.querySelectorAll(".delete-btn").forEach(btn => {
-            btn.onclick = function() {
-                const id = this.getAttribute("data-id");
-                const name = this.getAttribute("data-name");
-                
-                document.getElementById("delete-id").value = id;
-                document.getElementById("delete-party-name").textContent = name;
-                
-                deleteModal.style.display = "block";
-            }
-        });
-
         // Close modals
         closeBtns.forEach(btn => {
             btn.onclick = function() {
                 addModal.style.display = "none";
-                editModal.style.display = "none";
-                deleteModal.style.display = "none";
             }
         });
 
         // Close modals when clicking outside
         window.onclick = function(event) {
-            if (event.target == addModal || event.target == editModal || event.target == deleteModal) {
+            if (event.target == addModal) {
                 addModal.style.display = "none";
-                editModal.style.display = "none";
-                deleteModal.style.display = "none";
             }
         }
 
         // Form submissions
         document.getElementById("addPartyForm").addEventListener("submit", function(e) {
             e.preventDefault();
+            
+            // Prevent double submission
+            const submitButton = document.getElementById("addPartySubmit");
+            const spinner = document.getElementById("addSpinner");
+            const loadingText = submitButton.querySelector("span:last-child");
+            const originalText = loadingText.textContent;
+            
+            if (submitButton.disabled) {
+                return;
+            }
+            
+            // Disable button and show spinner
+            submitButton.disabled = true;
+            submitButton.classList.add("btn-loading");
+            spinner.style.display = "inline-block";
+            loadingText.textContent = "Adding...";
+            document.getElementById("addPartyForm").classList.add("form-loading");
             
             const name = document.getElementById("name").value;
             const location = document.getElementById("location").value;
@@ -245,85 +167,45 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    document.getElementById("add-success-message").style.display = "block";
+                    const successMsg = document.getElementById("add-success-message");
+                    successMsg.style.display = "block";
+                    successMsg.classList.add("show");
                     document.getElementById("add-error-message").style.display = "none";
+                    
+                    // Keep loading state for success feedback
+                    submitButton.textContent = "Added Successfully!";
+                    
                     setTimeout(() => {
                         window.location.reload();
                     }, 1000);
                 } else {
-                    document.getElementById("add-error-message").textContent = 'Error: ' + data.error;
-                    document.getElementById("add-error-message").style.display = "block";
+                    const errorMsg = document.getElementById("add-error-message");
+                    errorMsg.textContent = 'Error: ' + data.error;
+                    errorMsg.style.display = "block";
+                    errorMsg.classList.add("show");
                     document.getElementById("add-success-message").style.display = "none";
+                    
+                    // Reset button state
+                    submitButton.disabled = false;
+                    submitButton.classList.remove("btn-loading");
+                    spinner.style.display = "none";
+                    loadingText.textContent = originalText;
+                    document.getElementById("addPartyForm").classList.remove("form-loading");
                 }
             })
             .catch(error => {
-                document.getElementById("add-error-message").textContent = 'Error: ' + error;
-                document.getElementById("add-error-message").style.display = "block";
+                const errorMsg = document.getElementById("add-error-message");
+                errorMsg.textContent = 'Error: ' + error;
+                errorMsg.style.display = "block";
+                errorMsg.classList.add("show");
                 document.getElementById("add-success-message").style.display = "none";
-            });
-        });
-
-        document.getElementById("editPartyForm").addEventListener("submit", function(e) {
-            e.preventDefault();
-            
-            const partyId = document.getElementById("edit-id").value;
-            const name = document.getElementById("edit-name").value;
-            const location = document.getElementById("edit-location").value;
-            const phone = document.getElementById("edit-phone").value;
-            const gst = document.getElementById("edit-gst").value;
-            
-            fetch('/ajax/edit-party/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    id: partyId,
-                    name: name,
-                    location: location,
-                    phone: phone,
-                    gst: gst
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Reload the page to show updated list
-                    window.location.reload();
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            })
-            .catch(error => {
-                alert('Error: ' + error);
-            });
-        });
-
-        document.getElementById("deletePartyForm").addEventListener("submit", function(e) {
-            e.preventDefault();
-            
-            const partyId = document.getElementById("delete-id").value;
-            
-            fetch('/ajax/delete-party/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    id: partyId
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Reload the page to show updated list
-                    window.location.reload();
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            })
-            .catch(error => {
-                alert('Error: ' + error);
+                
+                // Reset button state
+                submitButton.disabled = false;
+                submitButton.classList.remove("btn-loading");
+                spinner.style.display = "none";
+                loadingText.textContent = originalText;
+                document.getElementById("addPartyForm").classList.remove("form-loading");
             });
         });
     </script>

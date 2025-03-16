@@ -29,11 +29,15 @@
             Back to Parties
         </a>
         <h2>{{ party.name }} Details</h2>
-    </nav>
+    </nav> 
 
     <div class="container">
         <div class="party-info">
             <h3>Party Information</h3>
+            <div class="party-actions">
+                <button id="edit-party-btn" class="btn-secondary">Edit Party</button>
+                <button id="delete-party-btn" class="btn-danger">Delete Party</button>
+            </div>
             <div class="info-grid">
                 <div class="info-item">
                     <span class="label">Name:</span>
@@ -211,8 +215,197 @@
                 </div>
             </div>
         </div>
+
+        <!-- Edit Party Modal -->
+        <div id="edit-party-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Edit Party</h3>
+                    <span class="close-modal">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="party-name">Name:</label>
+                        <input type="text" id="party-name" value="{{ party.name }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="party-location">Location:</label>
+                        <input type="text" id="party-location" value="{{ party.location|default:'' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="party-phone">Phone:</label>
+                        <input type="text" id="party-phone" value="{{ party.phone|default:'' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="party-gst">GST:</label>
+                        <input type="text" id="party-gst" value="{{ party.gst|default:'' }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary cancel-modal">Cancel</button>
+                    <button type="button" class="btn-primary" id="save-party-changes">Save Changes</button>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <!-- Add this script at the end of the body -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Define variables from Django template context
+            const partyId = "{{ party.id }}";
+            const partyName = "{{ party.name }}";
+            
+            // Edit party functionality
+            const editPartyBtn = document.getElementById('edit-party-btn');
+            const editPartyModal = document.getElementById('edit-party-modal');
+            const closeModalBtns = document.querySelectorAll('.close-modal, .cancel-modal');
+            const savePartyChangesBtn = document.getElementById('save-party-changes');
+            const deletePartyBtn = document.getElementById('delete-party-btn');
+            
+            // Open edit modal
+            if (editPartyBtn) {
+                editPartyBtn.addEventListener('click', function() {
+                    editPartyModal.style.display = 'block';
+                });
+            }
+            
+            // Close modals
+            closeModalBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    editPartyModal.style.display = 'none';
+                });
+            });
+            
+            // Save party changes
+            if (savePartyChangesBtn) {
+                savePartyChangesBtn.addEventListener('click', function() {
+                    // Disable button to prevent multiple clicks
+                    const button = this;
+                    button.disabled = true;
+                    button.innerHTML = 'Saving...';
+                    
+                    const name = document.getElementById('party-name').value;
+                    const location = document.getElementById('party-location').value;
+                    const phone = document.getElementById('party-phone').value;
+                    const gst = document.getElementById('party-gst').value;
+                    
+                    // Basic validation
+                    if (!name) {
+                        alert('Party name is required');
+                        button.disabled = false;
+                        button.innerHTML = 'Save Changes';
+                        return;
+                    }
+                    
+                    // Send AJAX request to update party
+                    fetch('{% url "ajax_edit_party" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            id: partyId,
+                            name: name,
+                            location: location,
+                            phone: phone,
+                            gst: gst
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Close modal and refresh page to show updated info
+                            editPartyModal.style.display = 'none';
+                            window.location.reload();
+                        } else {
+                            // Re-enable button if error occurs
+                            button.disabled = false;
+                            button.innerHTML = 'Save Changes';
+                            alert('Error updating party: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        // Re-enable button if error occurs
+                        button.disabled = false;
+                        button.innerHTML = 'Save Changes';
+                        console.error('Error updating party:', error);
+                        alert('An error occurred while updating the party');
+                    });
+                });
+            }
+            
+            // Delete party
+            if (deletePartyBtn) {
+                deletePartyBtn.addEventListener('click', function() {
+                    // Store reference to the button
+                    const button = this;
+                    
+                    // Use SweetAlert2 for confirmation
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "You're about to delete " + partyName + ". This action cannot be undone!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, delete it!',
+                        allowOutsideClick: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Disable button to prevent multiple deletion attempts
+                            button.disabled = true;
+                            button.innerHTML = 'Deleting...';
+                            
+                            // Send AJAX request to delete party
+                            fetch('{% url "ajax_delete_party" %}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    id: partyId
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Swal.fire(
+                                        'Deleted!',
+                                        'Party has been deleted.',
+                                        'success'
+                                    ).then(() => {
+                                        // Redirect to parties list
+                                        window.location.href = '{% url "parties" %}';
+                                    });
+                                } else {
+                                    // Re-enable button if error occurs
+                                    button.disabled = false;
+                                    button.innerHTML = 'Delete Party';
+                                    Swal.fire(
+                                        'Error!',
+                                        'Failed to delete party: ' + data.error,
+                                        'error'
+                                    );
+                                }
+                            })
+                            .catch(error => {
+                                // Re-enable button if error occurs
+                                button.disabled = false;
+                                button.innerHTML = 'Delete Party';
+                                console.error('Error deleting party:', error);
+                                Swal.fire(
+                                    'Error!',
+                                    'An error occurred while deleting the party',
+                                    'error'
+                                );
+                            });
+                        }
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>

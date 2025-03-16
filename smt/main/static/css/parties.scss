@@ -220,30 +220,15 @@ button {
         transition: transform 0.2s, fill 0.2s;
     }
     
-    &.edit-btn {
-        background-color: rgba(33, 150, 243, 0.1);
+    &.view-btn {
+        background-color: rgba(76, 175, 80, 0.1);
         
         svg {
-            fill: #2196f3;
+            fill: #4caf50;
         }
         
         &:hover {
-            background-color: rgba(33, 150, 243, 0.2);
-            svg {
-                transform: rotate(10deg);
-            }
-        }
-    }
-    
-    &.delete-btn {
-        background-color: rgba(244, 67, 54, 0.1);
-        
-        svg {
-            fill: #f44336;
-        }
-        
-        &:hover {
-            background-color: rgba(244, 67, 54, 0.2);
+            background-color: rgba(76, 175, 80, 0.2);
             svg {
                 transform: scale(1.1);
             }
@@ -385,6 +370,110 @@ form {
     color: #f44336;
     font-weight: 500;
     margin-top: 0.5rem;
+    transform: translateY(10px);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.error-message.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* Loading spinner */
+.spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center the content */
+    width: 100%; /* Take full width of button */
+}
+
+/* Button states */
+button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+    position: relative;
+    overflow: hidden; /* For the shimmer effect */
+}
+
+/* Button loading shimmer effect */
+button:disabled::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    );
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    100% { left: 150%; }
+}
+
+.form-loading {
+    position: relative;
+}
+
+.form-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #4caf50, #2196f3, #4caf50);
+    background-size: 200% 100%;
+    animation: gradient 1.5s ease-in-out infinite;
+    z-index: 10; /* Ensure it's visible */
+}
+
+@keyframes gradient {
+    0% { background-position: 0% 0; }
+    50% { background-position: 100% 0; }
+    100% { background-position: 0% 0; }
+}
+
+/* Special styling for loading buttons */
+.btn-loading {
+    background-color: #7dc681 !important; /* Lighter green for primary */
+}
+.btn-loading.btn-danger {
+    background-color: #f77066 !important; /* Lighter red for danger */
+}
+
+/* Success/Error messages with animation */
+.success-message, .error-message {
+    transform: translateY(10px);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.success-message.show, .error-message.show {
+    transform: translateY(0);
+    opacity: 1;
 }
 
 /* Responsive adjustments */
